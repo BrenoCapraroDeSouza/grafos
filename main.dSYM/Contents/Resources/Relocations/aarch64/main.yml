@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/brenosouza/Documents/faculdade/7semestre/sex-grafos/Grafos/main'
+relocations:     []
+...
