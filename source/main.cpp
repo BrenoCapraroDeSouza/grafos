@@ -7,7 +7,7 @@
 using namespace std;
 
 int main(int argc, char** argv) {
-    cout << "Projeto Grafos - carregamento interativo";
+    cout << "Projeto Grafos - carregamento interativo" << endl;
 
     // Perguntar ao usuário se o grafo é direcionado
     char c;
@@ -64,12 +64,12 @@ int main(int argc, char** argv) {
         for (int v : dfs_ordem) cout << v << " ";
         cout << endl;
 
-        cout << "Dijkstra a partir do vertice 0 :";
+        cout << "Dijkstra a partir do vertice 0 :" << endl;
         auto pr = grafo->dijkstra(0);
         auto &dist = pr.first;
         auto &prev = pr.second;
         for (int i = 0; i < grafo->numVertices(); ++i) {
-        cout << i << " (" << grafo->labelVertice(i) << ") : ";
+        cout << grafo->nomeVertice(i) << " (" << grafo->labelVertice(i) << ") : ";
         if (dist[i] == numeric_limits<float>::infinity()) cout << "INF";
         else cout << dist[i];
         cout << endl;
