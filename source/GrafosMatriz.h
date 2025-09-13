@@ -9,91 +9,115 @@ using namespace std;
 class GrafoMatriz : public Grafos {
 private:
     // usamos -1.0f para indicar ausência de aresta
-    vector<vector<float>> matriz;
-    const float NO_EDGE = -1.0f;
+    vector<vector<float>> matrizAdjacencia;
+    const float SEM_ARESTA = -1.0f;
 
 public:
-    GrafoMatriz(bool dirigido = false, bool ponderado = false)
-        : Grafos(dirigido, ponderado) {}
+    GrafoMatriz(bool direcionado = false, bool ponderado = false)
+        : Grafos(direcionado, ponderado) {}
 
-    bool inserirVertice(const string& label) override {
-        labels.push_back(label);
-        int n = numVertices();
-        matriz.resize(n);
-        for (int i = 0; i < n; ++i) {
-            matriz[i].resize(n, NO_EDGE);
+    bool inserirVertice(const string& rotuloVertice) override {
+        rotulosVertices.push_back(rotuloVertice);
+        int totalVertices = numVertices();
+        matrizAdjacencia.resize(totalVertices);
+        for (int indiceLinha = 0; indiceLinha < totalVertices; ++indiceLinha) {
+            matrizAdjacencia[indiceLinha].resize(totalVertices, SEM_ARESTA);
         }
         return true;
     }
 
-    bool removerVertice(int indice) override {
-        int n = numVertices();
-        if (indice < 0 || indice >= n) return false;
-        labels.erase(labels.begin() + indice);
-        matriz.erase(matriz.begin() + indice);
-        for (auto &row : matriz) row.erase(row.begin() + indice);
+    bool removerVertice(int indiceVertice) override {
+        int totalVertices = numVertices();
+        if (indiceVertice < 0 || indiceVertice >= totalVertices) return false;
+        rotulosVertices.erase(rotulosVertices.begin() + indiceVertice);
+        matrizAdjacencia.erase(matrizAdjacencia.begin() + indiceVertice);
+        for (auto &linha : matrizAdjacencia) linha.erase(linha.begin() + indiceVertice);
         return true;
     }
 
     void imprimeGrafo() const override {
-        cout << "Grafo (matriz) - V=" << numVertices()
-             << " Dirigido=" << dirigido << " Ponderado=" << ponderado << "\n";
+        cout << "Grafo (matriz) - V= " << numVertices()
+             << " Dirigido= " << grafoDirecionado << " Ponderado=" << grafoPonderado << "\n";
 
-        for (int i = 0; i < numVertices(); ++i) {
-            // nomeVertice(i) vem do Grafos.h e já devolve A, B, C...
-            cout << nomeVertice(i) << " -> ";
-            bool first = true;
-            for (int j = 0; j < numVertices(); ++j) {
-                if (matriz[i][j] != NO_EDGE) {
-                    if (!first) cout << ", ";
-                    first = false;
-                    if (ponderado)
-                        cout << nomeVertice(j) << "(w=" << matriz[i][j] << ")";
+        for (int indiceVertice = 0; indiceVertice < numVertices(); ++indiceVertice) {
+            cout << nomeVertice(indiceVertice) << " -> ";
+            bool primeiroVizinho = true;
+            for (int indiceVizinho = 0; indiceVizinho < numVertices(); ++indiceVizinho) {
+                if (matrizAdjacencia[indiceVertice][indiceVizinho] != SEM_ARESTA) {
+                    if (!primeiroVizinho) cout << ", ";
+                    primeiroVizinho = false;
+                    if (grafoPonderado)
+                        cout << nomeVertice(indiceVizinho) << "(w=" << matrizAdjacencia[indiceVertice][indiceVizinho] << ")";
                     else
-                        cout << nomeVertice(j);
+                        cout << nomeVertice(indiceVizinho);
                 }
             }
-            if (first) cout << "-";
+            if (primeiroVizinho) cout << "-";
             cout << "\n";
+        }
+
+        // Impressão da matriz de adjacência
+        cout << "\nMatriz de adjacência:" << endl;
+        cout << "  ";
+        for (int indiceColuna = 0; indiceColuna < numVertices(); ++indiceColuna) {
+            cout << nomeVertice(indiceColuna) << " ";
+        }
+        cout << endl;
+        for (int indiceLinha = 0; indiceLinha < numVertices(); ++indiceLinha) {
+            cout << nomeVertice(indiceLinha) << " ";
+            for (int indiceColuna = 0; indiceColuna < numVertices(); ++indiceColuna) {
+                float valor = matrizAdjacencia[indiceLinha][indiceColuna];
+                if (grafoDirecionado) {
+                    // Grafo direcionado: imprime matriz normal
+                    cout << (valor == SEM_ARESTA ? 0 : valor) << " ";
+                } else {
+                    // Grafo não direcionado: espelha parte de baixo
+                    if (valor == SEM_ARESTA && matrizAdjacencia[indiceColuna][indiceLinha] != SEM_ARESTA)
+                        cout << matrizAdjacencia[indiceColuna][indiceLinha] << " ";
+                    else
+                        cout << (valor == SEM_ARESTA ? 0 : valor) << " ";
+                }
+            }
+            cout << endl;
         }
     }
 
-    bool inserirAresta(int origem, int destino, float peso = 1.0f) override {
-        int n = numVertices();
-        if (origem < 0 || origem >= n || destino < 0 || destino >= n) return false;
-        float w = ponderado ? peso : 1.0f;
-        matriz[origem][destino] = w;
-        if (!dirigido) matriz[destino][origem] = w;
+    bool inserirAresta(int indiceOrigem, int indiceDestino, float pesoAresta = 1.0f) override {
+        int totalVertices = numVertices();
+        if (indiceOrigem < 0 || indiceOrigem >= totalVertices || indiceDestino < 0 || indiceDestino >= totalVertices) return false;
+        float pesoFinal = grafoPonderado ? pesoAresta : 1.0f;
+        matrizAdjacencia[indiceOrigem][indiceDestino] = pesoFinal;
+        if (!grafoDirecionado) matrizAdjacencia[indiceDestino][indiceOrigem] = pesoFinal;
         return true;
     }
 
-    bool removerAresta(int origem, int destino) override {
-        int n = numVertices();
-        if (origem < 0 || origem >= n || destino < 0 || destino >= n) return false;
-        matriz[origem][destino] = NO_EDGE;
-        if (!dirigido) matriz[destino][origem] = NO_EDGE;
+    bool removerAresta(int indiceOrigem, int indiceDestino) override {
+        int totalVertices = numVertices();
+        if (indiceOrigem < 0 || indiceOrigem >= totalVertices || indiceDestino < 0 || indiceDestino >= totalVertices) return false;
+        matrizAdjacencia[indiceOrigem][indiceDestino] = SEM_ARESTA;
+        if (!grafoDirecionado) matrizAdjacencia[indiceDestino][indiceOrigem] = SEM_ARESTA;
         return true;
     }
 
-    bool existeAresta(int origem, int destino) const override {
-        int n = numVertices();
-        if (origem < 0 || origem >= n || destino < 0 || destino >= n) return false;
-        return matriz[origem][destino] != NO_EDGE;
+    bool existeAresta(int indiceOrigem, int indiceDestino) const override {
+        int totalVertices = numVertices();
+        if (indiceOrigem < 0 || indiceOrigem >= totalVertices || indiceDestino < 0 || indiceDestino >= totalVertices) return false;
+        return matrizAdjacencia[indiceOrigem][indiceDestino] != SEM_ARESTA;
     }
 
-    float pesoAresta(int origem, int destino) const override {
-        if (!existeAresta(origem, destino)) return -1.0f;
-        return matriz[origem][destino];
+    float pesoAresta(int indiceOrigem, int indiceDestino) const override {
+        if (!existeAresta(indiceOrigem, indiceDestino)) return -1.0f;
+        return matrizAdjacencia[indiceOrigem][indiceDestino];
     }
 
-    vector<int> retornarVizinhos(int vertice) const override {
-        vector<int> viz;
-        int n = numVertices();
-        if (vertice < 0 || vertice >= n) return viz;
-        for (int j = 0; j < n; ++j)
-            if (matriz[vertice][j] != NO_EDGE)
-                viz.push_back(j);
-        return viz;
+    vector<int> retornarVizinhos(int indiceVertice) const override {
+        vector<int> vizinhos;
+        int totalVertices = numVertices();
+        if (indiceVertice < 0 || indiceVertice >= totalVertices) return vizinhos;
+        for (int indiceVizinho = 0; indiceVizinho < totalVertices; ++indiceVizinho)
+            if (matrizAdjacencia[indiceVertice][indiceVizinho] != SEM_ARESTA)
+                vizinhos.push_back(indiceVizinho);
+        return vizinhos;
     }
 };
 

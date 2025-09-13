@@ -15,118 +15,118 @@ using namespace std;
 
 class Grafos {
 protected:
-vector<string> labels; // rótulos dos vértices
-bool dirigido;
-bool ponderado;
+vector<string> rotulosVertices; // rótulos dos vértices
+bool grafoDirecionado;
+bool grafoPonderado;
 
 public:
-Grafos(bool dirigido = false, bool ponderado = false)
-: dirigido(dirigido), ponderado(ponderado) {}
+Grafos(bool direcionado = false, bool ponderado = false)
+: grafoDirecionado(direcionado), grafoPonderado(ponderado) {}
 virtual ~Grafos() {}
 
-bool ehDirecionado() const { return dirigido; }
-bool ehPonderado() const { return ponderado; }
+bool ehDirecionado() const { return grafoDirecionado; }
+bool ehPonderado() const { return grafoPonderado; }
 
 // operações 
-virtual bool inserirVertice(const string& label) = 0;
-virtual bool removerVertice(int indice) = 0;
-virtual string labelVertice(int indice) const {
-if (indice < 0 || indice >= (int)labels.size()) return "";
-return labels[indice];
+virtual bool inserirVertice(const string& rotulo) = 0;
+virtual bool removerVertice(int indiceVertice) = 0;
+virtual string rotuloVertice(int indiceVertice) const {
+    if (indiceVertice < 0 || indiceVertice >= (int)rotulosVertices.size()) return "";
+    return rotulosVertices[indiceVertice];
 }
 virtual void imprimeGrafo() const = 0;
 
-virtual bool inserirAresta(int origem, int destino, float peso = 1.0f) = 0;
-virtual bool removerAresta(int origem, int destino) = 0;
-virtual bool existeAresta(int origem, int destino) const = 0;
-virtual float pesoAresta(int origem, int destino) const = 0;
-virtual vector<int> retornarVizinhos(int vertice) const = 0;
+virtual bool inserirAresta(int indiceOrigem, int indiceDestino, float pesoAresta = 1.0f) = 0;
+virtual bool removerAresta(int indiceOrigem, int indiceDestino) = 0;
+virtual bool existeAresta(int indiceOrigem, int indiceDestino) const = 0;
+virtual float pesoAresta(int indiceOrigem, int indiceDestino) const = 0;
+virtual vector<int> retornarVizinhos(int indiceVertice) const = 0;
 
-int numVertices() const { return (int)labels.size(); }
+int numVertices() const { return (int)rotulosVertices.size(); }
 
 
-string nomeVertice(int indice) const {
-    if (indice < 0) return "";
-    if (indice < 26) {
-        char c = 'A' + indice;
-        return string(1, c);
+string nomeVertice(int indiceVertice) const {
+    if (indiceVertice < 0) return "";
+    if (indiceVertice < 26) {
+        char letra = 'A' + indiceVertice;
+        return string(1, letra);
     } else {
-        return to_string(indice); // fallback quando > 'Z'
+        return to_string(indiceVertice); // fallback quando > 'Z'
     }
 }
 
 // BFS: retorna a ordem de visita (índices) a partir de um vértice origem
-vector<int> bfs(int origem) const {
-    vector<int> ordem;
-    int n = numVertices();
-    if (origem < 0 || origem >= n) return ordem;
-    vector<bool> vis(n, false);
-    queue<int> q;
-    vis[origem] = true;
-    q.push(origem);
-    while (!q.empty()) {
-        int u = q.front(); q.pop();
-        ordem.push_back(u);
-        for (int v : retornarVizinhos(u)) {
-            if (!vis[v]) {
-                vis[v] = true;
-                q.push(v);
+vector<int> bfs(int indiceOrigem) const {
+    vector<int> ordemVisita;
+    int totalVertices = numVertices();
+    if (indiceOrigem < 0 || indiceOrigem >= totalVertices) return ordemVisita;
+    vector<bool> visitado(totalVertices, false);
+    queue<int> fila;
+    visitado[indiceOrigem] = true;
+    fila.push(indiceOrigem);
+    while (!fila.empty()) {
+        int verticeAtual = fila.front(); fila.pop();
+        ordemVisita.push_back(verticeAtual);
+        for (int vizinho : retornarVizinhos(verticeAtual)) {
+            if (!visitado[vizinho]) {
+                visitado[vizinho] = true;
+                fila.push(vizinho);
             }
         }
     }
-    return ordem;
+    return ordemVisita;
 }
 
 // DFS (iterativa): retorna a ordem de visita (pré-ordem)
-vector<int> dfs(int origem) const {
-    vector<int> ordem;
-    int n = numVertices();
-    if (origem < 0 || origem >= n) return ordem;
-    vector<bool> vis(n, false);
-    stack<int> st;
-    st.push(origem);
-    while (!st.empty()) {
-        int u = st.top(); st.pop();
-        if (vis[u]) continue;
-        vis[u] = true;
-        ordem.push_back(u);
-        // para manter comportamento semelhante ao recursivo, empilhar vizinhos em ordem reversa
-        auto viz = retornarVizinhos(u);
-        for (auto it = viz.rbegin(); it != viz.rend(); ++it) st.push(*it);
+vector<int> dfs(int indiceOrigem) const {
+    vector<int> ordemVisita;
+    int totalVertices = numVertices();
+    if (indiceOrigem < 0 || indiceOrigem >= totalVertices) return ordemVisita;
+    vector<bool> visitado(totalVertices, false);
+    stack<int> pilha;
+    pilha.push(indiceOrigem);
+    while (!pilha.empty()) {
+        int verticeAtual = pilha.top(); pilha.pop();
+        if (visitado[verticeAtual]) continue;
+        visitado[verticeAtual] = true;
+        ordemVisita.push_back(verticeAtual);
+        auto vizinhos = retornarVizinhos(verticeAtual);
+        for (auto it = vizinhos.rbegin(); it != vizinhos.rend(); ++it) pilha.push(*it);
     }
-    return ordem;
+    return ordemVisita;
 }
 
 // Dijkstra: retorna par(distancias, predecessor)
 // dist = vetor de distância (infinito se inacessível), prev = anterior no caminho (-1 se nenhum)
-pair<vector<float>, vector<int>> dijkstra(int origem) const {
-    int n = numVertices();
-    const float INF = numeric_limits<float>::infinity();
-    vector<float> dist(n, INF);
-    vector<int> prev(n, -1);
-    if (origem < 0 || origem >= n) return {dist, prev};
 
-    using P = pair<float,int>; // (dist, vert)
-    priority_queue<P, vector<P>, greater<P>> pq;
+pair<vector<float>, vector<int>> dijkstra(int indiceOrigem) const {
+    int totalVertices = numVertices();
+    const float INFINITO = numeric_limits<float>::infinity();
+    vector<float> distancia(totalVertices, INFINITO);
+    vector<int> anterior(totalVertices, -1);
+    if (indiceOrigem < 0 || indiceOrigem >= totalVertices) return {distancia, anterior};
 
-    dist[origem] = 0.0f;
-    pq.push({0.0f, origem});
+    using ParDistVertice = pair<float,int>; // (distancia, vertice)
+    priority_queue<ParDistVertice, vector<ParDistVertice>, greater<ParDistVertice>> filaPrioridade;
 
-    while (!pq.empty()) {
-        auto[d,u] = pq.top(); pq.pop();
-        if (d > dist[u]) continue;
-        for (int v : retornarVizinhos(u)) {
-            float w = pesoAresta(u,v);
-            if (!ponderado) w = 1.0f; // caso grafo não ponderado
-            if (w < 0) continue; // aresta inexistente (defesa)
-            if (dist[u] + w < dist[v]) {
-                dist[v] = dist[u] + w;
-                prev[v] = u;
-                pq.push({dist[v], v});
+    distancia[indiceOrigem] = 0.0f;
+    filaPrioridade.push({0.0f, indiceOrigem});
+
+    while (!filaPrioridade.empty()) {
+        auto [distAtual, verticeAtual] = filaPrioridade.top(); filaPrioridade.pop();
+        if (distAtual > distancia[verticeAtual]) continue;
+        for (int vizinho : retornarVizinhos(verticeAtual)) {
+            float peso = pesoAresta(verticeAtual, vizinho);
+            if (!grafoPonderado) peso = 1.0f; // caso grafo não ponderado
+            if (peso < 0) continue; // aresta inexistente (defesa)
+            if (distancia[verticeAtual] + peso < distancia[vizinho]) {
+                distancia[vizinho] = distancia[verticeAtual] + peso;
+                anterior[vizinho] = verticeAtual;
+                filaPrioridade.push({distancia[vizinho], vizinho});
             }   
         }
     }
-    return {dist, prev};
+    return {distancia, anterior};
 }
 
 };

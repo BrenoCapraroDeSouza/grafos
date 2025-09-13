@@ -12,22 +12,21 @@ using namespace std;
 
 class LeitorGrafos {
 public:
-// Função auxiliar que apenas lê V e A (e as linhas das arestas) do arquivo.
+// Função auxiliar que lê V, A, D, P e as arestas do arquivo.
 // Retorna true se leu com sucesso; os dados lidos são passados por referência.
-static bool lerCabecalhoEArestas(const string &arquivo, int &V, int &A, vector<tuple<int,int,float>> &arestas, bool expectPeso) {
+static bool lerCabecalhoEArestas(const string &arquivo, int &V, int &A, int &D, int &P, vector<tuple<int,int,float>> &arestas, bool expectPeso) {
     ifstream in(arquivo);
     if (!in) return false;
-    int D, P;
     if (!(in >> V >> A >> D >> P)) return false;
     arestas.clear();
     for (int e = 0; e < A; ++e) {
-        int ao, ad;
-        float ap = 1.0f;
-        if (!(in >> ao >> ad)) return false;
+        int origem, destino;
+        float peso = 1.0f;
+        if (!(in >> origem >> destino)) return false;
         if (expectPeso) {
-            if (!(in >> ap)) return false;
+            if (!(in >> peso)) return false;
         }
-        arestas.emplace_back(ao, ad, ap);
+        arestas.emplace_back(origem, destino, peso);
     }
     return true;
 }
